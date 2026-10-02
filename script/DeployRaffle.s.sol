@@ -23,13 +23,8 @@ contract DeployRaffle is Script {
                 createSubscription.createSubscription(config.vrfCoordinator, config.account);
 
             FundSubscription fundSubscription = new FundSubscription();
-            fundSubscription.fundSubscription(
-                config.vrfCoordinator, config.subscriptionId, config.link, config.account
-            );
-
+            fundSubscription.fundSubscription(config.vrfCoordinator, config.subscriptionId, config.link, config.account);
         }
-
-        
 
         vm.startBroadcast(config.account);
         Raffle raffle = new Raffle(

@@ -11,7 +11,7 @@ import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VR
 import {console} from "forge-std/Console.sol";
 import {CodeConstants} from "script/HelperConfig.s.sol";
 
-contract RaffleTest is Test,CodeConstants {
+contract RaffleTest is Test, CodeConstants {
     Raffle public raffle;
     HelperConfig public helperConfig;
 
@@ -30,7 +30,7 @@ contract RaffleTest is Test,CodeConstants {
 
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
-         vm.deal(PARTICIPANT, STARTING_PARTICIPANT_BALANCE); // works
+        vm.deal(PARTICIPANT, STARTING_PARTICIPANT_BALANCE); // works
         //
         (raffle, helperConfig) = deployer.deployContract(); // ERROR HERE
         //
@@ -41,8 +41,6 @@ contract RaffleTest is Test,CodeConstants {
         gasLane = config.gasLane;
         callbackGasLimit = config.callbackGasLimit;
         subscriptionId = config.subscriptionId;
-
-       
     }
 
     function testRaffleInitializesInOpenState() public view {
@@ -110,7 +108,7 @@ contract RaffleTest is Test,CodeConstants {
 
     // challenge
     // testCheckUpKeepReturnsFalseIfEnoughTimeHasPassed
-     function testCheckUpkeepReturnsFalseIfEnoughTimeHasntPassed() public {
+    function testCheckUpkeepReturnsFalseIfEnoughTimeHasntPassed() public {
         // Arrange
         vm.prank(PARTICIPANT);
         raffle.enterRaffle{value: entranceFee}();
@@ -122,24 +120,25 @@ contract RaffleTest is Test,CodeConstants {
         assert(!upkeepNeeded);
     }
 
-    function testCheckUpKeepReturnsTrueIfEnoughTimeHasPassed() public{
+    function testCheckUpKeepReturnsTrueIfEnoughTimeHasPassed() public {
         vm.prank(PARTICIPANT);
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
 
-        (bool upKeepNeeded, ) = raffle.checkUpKeep("");
+        (bool upKeepNeeded,) = raffle.checkUpKeep("");
 
         assert(upKeepNeeded);
     }
+
     // testCheckUpKeepReturnsTrueWhenParametersAreMet
     // function testCheckUpKeepReturnsTrueWhenParametersAreMet() public {
-        // PARAMETERS
-        // bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
-         // bool isOpen = s_raffleState == RaffleState.OPEN;
-        // bool hasBalance = address(this).balance > 0;
-        // bool hasParticipants = s_participants.length > 0;
-        // upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasParticipants;
-        function testCheckUpkeepReturnsTrueWhenParametersGood() public {
+    // PARAMETERS
+    // bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
+    // bool isOpen = s_raffleState == RaffleState.OPEN;
+    // bool hasBalance = address(this).balance > 0;
+    // bool hasParticipants = s_participants.length > 0;
+    // upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasParticipants;
+    function testCheckUpkeepReturnsTrueWhenParametersGood() public {
         // Arrange
         vm.prank(PARTICIPANT);
         raffle.enterRaffle{value: entranceFee}();
@@ -153,33 +152,31 @@ contract RaffleTest is Test,CodeConstants {
         assert(upkeepNeeded);
     }
 
-
-
     function testPerformUpKeepCanOnlyRunIfCheckUpKeepIsTrue() public {
         vm.prank(PARTICIPANT);
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
-                                        
+
         raffle.performUpkeep("");
     }
-    
+
     function testPerformUpKeepRevertsIfCheckUpKeepIsFalse() public {
-        uint256 currentBalance =0;
+        uint256 currentBalance = 0;
         uint256 numPlayers = 0;
-        Raffle.RaffleState  rState = raffle.getRaffleState();
+        Raffle.RaffleState rState = raffle.getRaffleState();
         vm.prank(PARTICIPANT);
         raffle.enterRaffle{value: entranceFee}();
         currentBalance = currentBalance + entranceFee;
         numPlayers = 1;
         vm.expectRevert(
-            abi.encodeWithSelector(Raffle.Raffle__upkeepNotNeeded.selector, currentBalance, numPlayers,rState)
+            abi.encodeWithSelector(Raffle.Raffle__upkeepNotNeeded.selector, currentBalance, numPlayers, rState)
         );
-        raffle.performUpkeep("");  
+        raffle.performUpkeep("");
     }
 
-    modifier  raffleEntered() {
-         vm.prank(PARTICIPANT);
+    modifier raffleEntered() {
+        vm.prank(PARTICIPANT);
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
@@ -209,23 +206,24 @@ contract RaffleTest is Test,CodeConstants {
         _;
     }
 
-    function testFulfillrandomWordsCanOnlyBeCalledAfterPerformUpKeeep(uint256 randomRequestId) public raffleEntered skipFork {
+    function testFulfillrandomWordsCanOnlyBeCalledAfterPerformUpKeeep(uint256 randomRequestId)
+        public
+        raffleEntered
+        skipFork
+    {
         vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
         VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(randomRequestId, address(raffle));
     }
 
-    function testFulfillrandomWordsPicksAWinnerResetsAndSendsMoney() public raffleEntered skipFork{
+    function testFulfillrandomWordsPicksAWinnerResetsAndSendsMoney() public raffleEntered skipFork {
         uint256 additionalEntrants = 3;
         uint256 startingIndex = 1;
         address expectedWinner = address(1);
 
-       
-
-        for (uint256 i = startingIndex; i<startingIndex + additionalEntrants; i++){
+        for (uint256 i = startingIndex; i < startingIndex + additionalEntrants; i++) {
             address newPlayer = address(uint160(i));
             hoax(newPlayer, 1 ether);
             raffle.enterRaffle{value: entranceFee}();
-
         }
         uint256 startingTimeStamp = raffle.getLastTimeStamp();
         uint256 winnerStartingBalance = expectedWinner.balance;
@@ -241,8 +239,6 @@ contract RaffleTest is Test,CodeConstants {
         uint256 winnerBalance = recentWinner.balance;
         uint256 endingTimestamp = raffle.getLastTimeStamp();
         uint256 prize = entranceFee * (additionalEntrants + 1);
-
-    
 
         assert(recentWinner == expectedWinner);
         assert(uint256(raffleState) == 0);

@@ -110,10 +110,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * @return - ignored
      */
 
-    function checkUpKeep(bytes memory /*checkData*/ )
+    function checkUpKeep(
+        bytes memory /*checkData*/
+    )
         public
         view
-        returns (bool upkeepNeeded, bytes memory /* performData */ )
+        returns (
+            bool upkeepNeeded,
+            bytes memory /* performData */
+        )
     {
         bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
         bool isOpen = s_raffleState == RaffleState.OPEN;
@@ -126,7 +131,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     //2. use a random number to pick a player
     //3. be automatically called
 
-    function performUpkeep(bytes calldata /* performData */ ) external {
+    function performUpkeep(
+        bytes calldata /* performData */
+    )
+        external
+    {
         (bool upKeepNeeded,) = checkUpKeep("");
         if (!upKeepNeeded) {
             revert Raffle__upkeepNotNeeded(address(this).balance, s_participants.length, uint256(s_raffleState));
@@ -146,12 +155,19 @@ contract Raffle is VRFConsumerBaseV2Plus {
             )
         });
         /*uint256 requestId = */
-        uint256 requestId =    s_vrfCoordinator.requestRandomWords(request);
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
         //Get random number
         emit RequestedRaffleWinner(requestId);
     }
 
-    function fulfillRandomWords(uint256, /*requestId,*/ uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(
+        uint256,
+        /*requestId,*/
+        uint256[] calldata randomWords
+    )
+        internal
+        override
+    {
         uint256 indexOfWinner = randomWords[0] % s_participants.length;
         address payable recentWinner = s_participants[indexOfWinner];
         s_recentWinner = recentWinner;
